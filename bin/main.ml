@@ -1,3 +1,5 @@
+open Bf
+
 let load_file_into_chars filename =
   let rec aux acc f =
     match In_channel.input_char f with
@@ -18,7 +20,9 @@ let () =
 
   try
     let contents = load_file_into_chars (Array.get Sys.argv 1) in
-    Printf.printf "Chars: %d\n" (List.length contents);
+    let instrs = Parser.parse_chars contents in
+    List.map Instr.to_string instrs
+    |> List.iter (Printf.printf "%s\n")
   with Sys_error msg -> begin
     Printf.printf "Failed to load file: %s\n" msg;
     exit 1;
