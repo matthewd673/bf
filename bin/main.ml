@@ -22,7 +22,12 @@ let () =
     let contents = load_file_into_chars (Array.get Sys.argv 1) in
     let instrs = Parser.parse_chars contents in
     List.map Instr.to_string instrs
-    |> List.iter (Printf.printf "%s\n")
+    |> List.iter (Printf.printf "%s\n");
+
+    print_endline "";
+
+    let vm = Vm.make 256 in
+    Vm.run vm instrs;
   with Sys_error msg -> begin
     Printf.printf "Failed to load file: %s\n" msg;
     exit 1;

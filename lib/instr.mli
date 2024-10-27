@@ -1,12 +1,12 @@
 type t =
-  | Inc
-  | Dec
-  | Left
-  | Right
-  | JOpen
-  | JClose
+  | Inc of int
+  | Dec of int
+  | Left of int
+  | Right of int
+  | Loop of t list
   | Input
   | Output
+  | Nop
 ;;
 
 val to_string : t -> string
