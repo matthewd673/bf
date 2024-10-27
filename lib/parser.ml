@@ -20,7 +20,9 @@ let ret_acc l =
 
 let parse_chars chars =
   let rec aux acc run loop = function
-    | [] -> ret_acc ((instr_of_run run) :: acc), []
+    | [] ->
+        if loop then raise (Failure "Unmatched '['")
+        else ret_acc ((instr_of_run run) :: acc), []
     | ('+' | '-' | '<' | '>' as h) :: t -> begin
       let (c, ct) = run in
       if h = c
