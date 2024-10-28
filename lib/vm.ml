@@ -5,9 +5,10 @@ type t = {
   mutable h : int;
 }
 
-let clamp x y =
-  let p = x mod y in
-  if p >= 0 then x else p + y - 1
+let rec clamp = function
+  | x when x > 255 -> clamp (x - 255)
+  | x when x < 0 -> clamp (x + 256)
+  | x -> x
 ;;
 
 let make size =
@@ -15,11 +16,18 @@ let make size =
 ;;
 
 let read_mem vm =
-  Array.get vm.mem vm.h
+  try
+    Array.get vm.mem vm.h
+  with Invalid_argument _ ->
+    raise (Failure (Printf.sprintf "%d is out of bounds" vm.h))
 ;;
 
 let write_mem vm value =
-  Array.set vm.mem vm.h (clamp value 256)
+  try
+    (* Array.set vm.mem vm.h (clamp value) *)
+    Array.set vm.mem vm.h value
+  with Invalid_argument _ ->
+    raise (Failure (Printf.sprintf "%d is out of bounds" vm.h))
 ;;
 
 let move_h vm amt =
@@ -31,32 +39,28 @@ let run vm =
   | Inc amt :: t ->
       let value = read_mem vm in
       write_mem vm (value + amt);
-      Printf.printf "%d : [%d]\n" vm.h (read_mem vm);
       aux vm t
   | Dec amt :: t ->
       let value = read_mem vm in
       write_mem vm (value - amt);
-      Printf.printf "%d : [%d]\n" vm.h (read_mem vm);
       aux vm t
   | Left amt :: t ->
       move_h vm (-amt);
-      Printf.printf "<- %d\n" vm.h;
       aux vm t
   | Right amt :: t ->
       move_h vm amt;
-      Printf.printf "-> %d\n" vm.h;
       aux vm t
   | Input :: t ->
-      Printf.printf "input: %!";
+      Printf.printf "\n>> %!";
       begin
         match In_channel.input_line In_channel.stdin with
         | Some str when String.length str > 0 ->
             write_mem vm (Char.code (String.get str 0));
-        | _ -> (); (* TODO: invalid input *)
+        | _ -> (); (* No input has no effect *)
       end;
       aux vm t
   | Output :: t ->
-      Printf.printf "output: %c\n" (Char.chr (read_mem vm));
+      Printf.printf "%c%!" (Char.chr (clamp (read_mem vm)));
       aux vm t
   | (Loop body :: t) as l ->
       if read_mem vm <> 0
